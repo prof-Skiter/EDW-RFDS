@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb  5 19:16:08 2018
+Created on Tue Feb  6 19:36:53 2018
 
 @author: skiter
 """
 
-# -*- coding: utf-8 -*-
 from sqlalchemy import create_engine
 import pandas as pd
 
@@ -13,7 +12,7 @@ engine = create_engine('mssql+pyodbc://sskiter1:sskiter1@edw123@PRDEDWPLYW2SQL0.
 connection = engine.connect()
 
 print('Enter Site Name: ', end='')
-a = input()
+site = input()
 
 stmt =  """
         SELECT SL.SiteID
@@ -29,7 +28,7 @@ stmt =  """
         LEFT JOIN SectorLayout AS SEC ON SEC.SectorLayoutID = SSL.SectorLayoutID
         LEFT JOIN AntennaDetail AS AD ON SSL.SectorLayoutID = AD.SectorLayoutID
         WHERE SL.SiteID Like '{}'
-        """.format(a)
+        """.format(site)
 results = connection.execute(stmt).fetchall()
 AZ = pd.DataFrame(results)
 AZ.columns = results[0].keys()
@@ -56,5 +55,23 @@ Azimuths = ''
 for i in tmp:
     Azimuths = Azimuths + i + '/'
 
-print(Azimuths)
+print('Azimuths: ', Azimuths)
+
+stmt =  """
+        SELECT [SiteID]
+              ,[Address]
+              ,[City]
+              ,[State]
+              ,[Zip]
+              ,[Latitude]
+              ,[Longitude]
+        FROM [DM_RFDS].[dbo].[Site]
+        WHERE [SiteID] Like '{}'
+        """.format(site)
+results = connection.execute(stmt).fetchall()
+site = pd.DataFrame(results)
+site.columns = results[0].keys()
+
+print(site)
+
 a = input()

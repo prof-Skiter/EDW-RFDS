@@ -12,7 +12,9 @@ import pandas as pd
 engine = create_engine('mssql+pyodbc://sskiter1:sskiter1@edw123@PRDEDWPLYW2SQL0.corporate.t-mobile.com/DM_RFDS?driver=SQL+Server+Native+Client+11.0')
 connection = engine.connect()
 
-# GET RMOD
+print('Enter Site Name: ', end='')
+a = input()
+
 stmt =  """
         SELECT SL.SiteID
 	         ,AL.SiteLayoutName
@@ -26,16 +28,32 @@ stmt =  """
         LEFT JOIN SiteLayout_SectorLayout AS SSL ON SL.SiteLayoutID = SSL.SiteLayoutID
         LEFT JOIN SectorLayout AS SEC ON SEC.SectorLayoutID = SSL.SectorLayoutID
         LEFT JOIN AntennaDetail AS AD ON SSL.SectorLayoutID = AD.SectorLayoutID
-        WHERE SL.SiteID Like 'AU01556A' AND AL.SiteLayoutName Like '761P_RUSq_No U2100' AND ST.StatusTypeName Like 'Live'
-        """
+        WHERE SL.SiteID Like '{}'
+        """.format(a)
 results = connection.execute(stmt).fetchall()
 AZ = pd.DataFrame(results)
 AZ.columns = results[0].keys()
 AZ.Azimuth = AZ.Azimuth.astype(int)
+
+config = AZ[['SiteLayoutName']].drop_duplicates().reset_index(drop=True)
+choice = {i:config.SiteLayoutName[i] for i in range(len(config))}
+print('Choose config:')
+for i in range(len(choice)):
+    print(i,': ',choice[i])
+a = input()
+AZ = AZ[AZ['SiteLayoutName'] == config.SiteLayoutName[int(a)]]
+
+status = AZ[['StatusTypeName']].drop_duplicates().reset_index(drop=True)
+choice = {i:status.StatusTypeName[i] for i in range(len(status))}
+print('Choose status:')
+for i in range(len(choice)):
+    print(i,': ',choice[i])
+a = input()
+AZ = AZ[AZ['StatusTypeName'] == status.StatusTypeName[int(a)]]
+
 tmp = AZ.groupby('SectorName')['Azimuth'].apply(lambda x: "%s" % str(set(x)).strip("{}"))
 Azimuths = ''
 for i in tmp:
     Azimuths = Azimuths + i + '/'
 
 print(Azimuths)
-
